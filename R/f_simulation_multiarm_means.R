@@ -416,7 +416,7 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
     simulatedNumberOfActiveArms <- matrix(0, nrow = kMax, ncol = cols)
     simulatedSubjectsPerStage <- array(0, dim = c(kMax, cols, gMax + 1))
     simulatedSuccessStopping <- matrix(0, nrow = kMax, ncol = cols)
-    simulatedFutilityStopping <- matrix(0, cols * (kMax - 1), nrow = kMax - 1, ncol = cols)
+    simulatedFutilityStopping <- matrix(0, nrow = kMax - 1, ncol = cols)
     simulatedConditionalPower <- matrix(0, nrow = kMax, ncol = cols)
     simulatedRejectAtLeastOne <- rep(0, cols)
     expectedNumberOfSubjects <- rep(0, cols)
@@ -450,7 +450,28 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
     index <- 1
     for (i in 1:cols) {
         for (j in 1:maxNumberOfIterations) {
-            stageResults <- .getSimulatedStageMeansMultiArm(
+            #stageResults <- .getSimulatedStageMeansMultiArm(
+            #    design = design,
+            #    muVector = effectMatrix[i, ],
+            #    stDev = stDev,
+            #    plannedSubjects = plannedSubjects,
+            #    typeOfSelection = typeOfSelection,
+            #    effectMeasure = effectMeasure,
+            #    adaptations = adaptations,
+            #    epsilonValue = epsilonValue,
+            #    rValue = rValue,
+            #    threshold = threshold,
+            #    allocationRatioPlanned = allocationRatioPlanned,
+            #    minNumberOfSubjectsPerStage = minNumberOfSubjectsPerStage,
+            #    maxNumberOfSubjectsPerStage = maxNumberOfSubjectsPerStage,
+            #    conditionalPower = conditionalPower,
+            #    thetaH1 = thetaH1,
+            #    stDevH1 = stDevH1,
+            #    calcSubjectsFunction = calcSubjectsFunction,
+            #    calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
+            #    selectArmsFunction = selectArmsFunction
+            #)
+            stageResults <- .getSimulatedStageMeansMultiArmCpp(
                 design = design,
                 muVector = effectMatrix[i, ],
                 stDev = stDev,
