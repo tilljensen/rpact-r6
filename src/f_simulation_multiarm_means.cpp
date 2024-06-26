@@ -39,8 +39,8 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
                                        Function calcSubjectsFunction,
                                        bool calcSubjectsFunctionIsUserDefined,
                                        Nullable<Function> selectArmsFunction) {
-  
-  int kMax = plannedSubjects.length();
+  NumericVector plannedSubjectsNew(clone(plannedSubjects));
+  int kMax = plannedSubjectsNew.length();
   int gMax = muVector.length();
   NumericMatrix simMeans(gMax + 1, kMax, ((NumericVector) rep(NA_REAL,(gMax + 1) * kMax)).begin());
   NumericMatrix overallEffects(gMax, kMax, ((NumericVector) rep(NA_REAL,gMax * kMax)).begin());
@@ -67,9 +67,9 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
   }
   for(int k = 0; k <= kMax - 1; k++) {
     if (k == 0) {
-        subjectsPerStage(gMax, k) = plannedSubjects[k] / allocationRatioPlanned[k];
+        subjectsPerStage(gMax, k) = plannedSubjectsNew[k] / allocationRatioPlanned[k];
     } else {
-        subjectsPerStage(gMax, k) = (plannedSubjects[k] - plannedSubjects[k - 1]) / allocationRatioPlanned[k];
+        subjectsPerStage(gMax, k) = (plannedSubjectsNew[k] - plannedSubjectsNew[k - 1]) / allocationRatioPlanned[k];
     }
     if (subjectsPerStage(gMax, k) > 0) {
         simMeans(gMax, k) = R::rnorm(0, stDev / sqrt(subjectsPerStage(gMax, k)));
@@ -78,9 +78,9 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
       for (int treatmentArm = 0; treatmentArm < gMax; treatmentArm++) {
         if (selectedArms(treatmentArm, k)) {
           if (k == 0) {
-            subjectsPerStage(treatmentArm, k) = plannedSubjects[k];
+            subjectsPerStage(treatmentArm, k) = plannedSubjectsNew[k];
           } else {
-            subjectsPerStage(treatmentArm, k) = plannedSubjects[k] - plannedSubjects[k - 1];
+            subjectsPerStage(treatmentArm, k) = plannedSubjectsNew[k] - plannedSubjectsNew[k - 1];
           }
           if (subjectsPerStage(treatmentArm, k) > 0) {
             simMeans(treatmentArm, k) = R::rnorm(muVector[treatmentArm], stDev / sqrt(subjectsPerStage(treatmentArm, k)));
@@ -126,7 +126,7 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
             _["stage"] = k + 2, // to be consistent with non-multiarm situation, cf. line 37
             _["conditionalPower"] = conditionalPower,
             _["conditionalCriticalValue"] = conditionalCriticalValue,
-            _["plannedSubjects"] = plannedSubjects,
+            _["plannedSubjects"] = clone(plannedSubjectsNew),
             _["allocationRatioPlanned"] = allocationRatioPlanned,
             _["selectedArms"] = selectedArms,
             _["thetaH1"] = thetaH1,
@@ -137,7 +137,9 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
           ));
   
           if (!NumericVector::is_na(conditionalPower) || calcSubjectsFunctionIsUserDefined) {
-            plannedSubjects[Range(k + 1, kMax - 1)] = sum(((NumericVector) subjectsPerStage(gMax, _ ))[Range(0, k)] * allocationRatioPlanned[Range(0, k)]) + ((NumericVector) cumsum(rep(newSubjects, kMax - (k + 1))));
+            NumericVector tempCumsum = ((NumericVector) cumsum(rep(newSubjects, kMax - (k + 1))));
+            double tempSum = sum(((NumericVector) subjectsPerStage(gMax, _ ))[Range(0, k)] * allocationRatioPlanned[Range(0, k)]);
+            plannedSubjectsNew[Range(k + 1, kMax - 1)] = tempSum + tempCumsum;
           }
         } else {
             selectedArms( _ , k + 1) = selectedArms( _ , k);
@@ -154,7 +156,7 @@ List getSimulatedStageMeansMultiArmCpp(Environment design,
         } else {
           thetaStandardized = thetaH1 / stDevH1;
         }
-        conditionalPowerPerStage[k] = 1 - R::pnorm(conditionalCriticalValue[k] - thetaStandardized * sqrt(plannedSubjects[k + 1] - plannedSubjects[k]) * sqrt(1 / (1 + allocationRatioPlanned[k])), 0, 1, 1, 0);
+        conditionalPowerPerStage[k] = 1 - R::pnorm(conditionalCriticalValue[k] - thetaStandardized * sqrt(plannedSubjectsNew[k + 1] - plannedSubjectsNew[k]) * sqrt(1 / (1 + allocationRatioPlanned[k])), 0, 1, 1, 0);
     }
   }
   return List::create(
@@ -390,254 +392,6 @@ List getSimulationMultiArmMeansLoopsCpp(int maxNumberOfIterations,
 }
 */
 
-// [[Rcpp::export(name = ".getSimulatedStageMeansMultiArmInnerForLoopCpp")]]
-List innerForLoop(int maxNumberOfIterations,
-                  Environment design,
-                  NumericMatrix effectMatrix,
-                  double stDev,
-                  NumericVector plannedSubjects,
-                  std::string typeOfSelection,
-                  std::string effectMeasure,
-                  LogicalVector adaptations,
-                  double epsilonValue,
-                  double rValue,
-                  double threshold,
-                  NumericVector allocationRatioPlanned,
-                  NumericVector minNumberOfSubjectsPerStage,
-                  NumericVector maxNumberOfSubjectsPerStage,
-                  double conditionalPower,
-                  double thetaH1,
-                  double stDevH1,
-                  Function calcSubjectsFunction,
-                  bool calcSubjectsFunctionIsUserDefined,
-                  Nullable<Function> selectArmsFunction,
-                  NumericMatrix indices,
-                  std::string intersectionTest,
-                  std::string successCriterion,
-                  int gMax,
-                  int kMax,
-                  Nullable<NumericVector> criticalValuesDunnett,
-                  NumericVector muMaxVector,
-                  int i,
-                  int cols,
-                  int index,
-                  int j,
-                  NumericMatrix iterations,
-                  NumericMatrix simulatedNumberOfActiveArms,
-                  NumericMatrix simulatedSuccessStopping,
-                  NumericMatrix simulatedFutilityStopping,
-                  NumericMatrix simulatedConditionalPower,
-                  NumericVector simulatedRejectAtLeastOne,
-                  NumericVector simulatedRejections,
-                  NumericVector simulatedSelections,
-                  NumericVector simulatedSubjectsPerStage,
-                  NumericVector dataIterationNumber,
-                  NumericVector dataStageNumber,
-                  NumericVector dataArmNumber,
-                  NumericVector dataAlternative,
-                  NumericVector dataEffect,
-                  NumericVector dataSubjectsControlArm,
-                  NumericVector dataSubjectsActiveArm,
-                  NumericVector dataNumberOfSubjects,
-                  NumericVector dataNumberOfCumulatedSubjects,
-                  NumericVector dataRejectPerStage,
-                  NumericVector dataTestStatistics,
-                  NumericVector dataSuccessStop,
-                  LogicalVector dataFutilityStop,
-                  NumericVector dataConditionalCriticalValue,
-                  NumericVector dataConditionalPowerAchieved,
-                  NumericVector dataEffectEstimate,
-                  NumericVector dataPValuesSeparate) {
-  i = i - 1;
-  index = index - 1;
-  //Rcout << "b00\n";
-  std::string typeOfDesign = Rcpp::as<std::string>(((CharacterVector) design.attr("class"))[0]);
-  //Rcout << "b0\n";
-  List stageResults = getSimulatedStageMeansMultiArmCpp(
-    design,
-    effectMatrix(i,_),
-    stDev,
-    plannedSubjects,
-    typeOfSelection,
-    effectMeasure,
-    adaptations,
-    epsilonValue,
-    rValue,
-    threshold,
-    allocationRatioPlanned,
-    minNumberOfSubjectsPerStage,
-    maxNumberOfSubjectsPerStage,
-    conditionalPower,
-    thetaH1,
-    stDevH1,
-    calcSubjectsFunction,
-    calcSubjectsFunctionIsUserDefined,
-    selectArmsFunction
-    );
-  //Rcout << "b1\n";
-  List closedTest;
-  Function performClosedConditionalDunnettTestForSimulation(".performClosedConditionalDunnettTestForSimulation");
-  Function performClosedCombinationTestForSimulationMultiArm(".performClosedCombinationTestForSimulationMultiArm");
-  if(typeOfDesign == "TrialDesignConditionalDunnett") {
-    closedTest = performClosedConditionalDunnettTestForSimulation(
-                _["stageResults"] = stageResults,
-                _["design"] = design,
-                _["indices"] = indices,
-                _["criticalValuesDunnett"] = criticalValuesDunnett,
-                _["successCriterion"] = successCriterion);
-  } else {
-    closedTest = performClosedCombinationTestForSimulationMultiArm(
-                _["stageResults"] = stageResults,
-                _["design"] = design,
-                _["indices"] = indices,
-                _["intersectionTest"] = intersectionTest,
-                _["successCriterion"] = successCriterion);
-  }
-  //Rcout << "b2\n";   
-  bool rejectAtSomeStage = false;
-  LogicalVector rejectedArmsBefore(gMax, false);
-    
-  for(int k = 0; k < kMax; k++) {
-    //simulatedRejections[k, i, ] = simulatedRejections[k, i, ] + (as<LogicalMatrix>(closedTest["rejected"])(_, k) & as<NumericMatrix>(closedTest["selectedArms"])(Range(0, gMax - 1), k) | rejectedArmsBefore); //TODO
-    //simulatedSelections[k, i, ] = simulatedSelections[k, i, ] + as<NumericMatrix>(closedTest["selectedArms"])(_, k); //TODO
-    //Rcout << "b3\n";
-    for(int idx = 0; idx < gMax; idx++) {
-      simulatedRejections[k + i * kMax + idx * kMax * cols] = simulatedRejections[k + i * kMax + idx * kMax * cols] + (as<LogicalMatrix>(closedTest["rejected"])(idx, k) & as<LogicalMatrix>(closedTest["selectedArms"])(idx, k) | rejectedArmsBefore[idx]);
-      //Rcout << "b4\n";
-      simulatedSelections[k + i * kMax + idx * kMax * cols] = simulatedSelections[k + i * kMax + idx * kMax * cols] + as<NumericMatrix>(closedTest["selectedArms"])(idx, k);
-    }
-    //Rcout << "b5\n";
-    simulatedNumberOfActiveArms(k, i) = simulatedNumberOfActiveArms(k, i) + sum(as<NumericMatrix>(closedTest["selectedArms"])(_, k));
-    if(!as<bool>(any(is_na(as<LogicalVector>(closedTest["successStop"]))))) {
-      //Rcout << "b6\n";
-      simulatedSuccessStopping(k, i) = simulatedSuccessStopping(k, i) + as<LogicalVector>(closedTest["successStop"])[k];
-    }
-    //Rcout << "b7\n";
-    if((kMax > 1) && ((k + 1) < kMax)) {
-      //Rcout << "b8\n";
-      if(!as<bool>(any(is_na(as<LogicalVector>(closedTest["futilityStop"]))))) {
-        //Rcout << "b9\n";
-        bool temp = as<LogicalVector>(closedTest["futilityStop"])[k] && !as<LogicalVector>(closedTest["successStop"])[k];
-        simulatedFutilityStopping(k, i) = simulatedFutilityStopping(k, i) + (temp ? 1 : 0); //TODO r sugar +
-      }
-      //Rcout << "b10\n";
-      bool cond1 = as<LogicalVector>(closedTest["successStop"])[k];
-      bool cond2 = as<LogicalVector>(closedTest["futilityStop"])[k];
-      if(!cond1 && !cond2) {
-        //Rcout << "b11\n";
-        simulatedConditionalPower(k + 1, i) = simulatedConditionalPower(k + 1, i) + as<NumericVector>(stageResults["conditionalPowerPerStage"])[k];
-      }
-    }
-    //Rcout << "b12\n";
-    iterations(k, i) = iterations(k, i) + 1;
-
-    for(int g = 0; g < gMax + 1; g++) {
-      //Rcout << "b13\n";
-      if(!NumericVector::is_na(as<NumericMatrix>(stageResults["subjectsPerStage"])(g, k))) {
-        //Rcout << "b14\n";
-        simulatedSubjectsPerStage[k + i * kMax + g * kMax * cols] = simulatedSubjectsPerStage[k + i * kMax + g * kMax * cols] + as<NumericMatrix>(stageResults["subjectsPerStage"])(g, k);
-      }
-    }
-    //Rcout << "b15\n";
-    for(int g = 0; g < gMax; g++) {
-      //Rcout << "b16\n";
-      dataIterationNumber[index] = j;
-      dataStageNumber[index] = k;
-      dataArmNumber[index] = g;
-      dataAlternative[index] = muMaxVector[i];
-      dataEffect[index] = effectMatrix(i, g);
-      //Rcout << "b17\n";
-      dataSubjectsControlArm[index] = round(as<NumericMatrix>(stageResults["subjectsPerStage"])(gMax + 1, k), 1);
-      dataSubjectsActiveArm[index] = round(as<NumericMatrix>(stageResults["subjectsPerStage"])(g, k), 1);
-      dataNumberOfSubjects[index] = round(sum(na_omit(as<NumericMatrix>(stageResults["subjectsPerStage"])(_ , k))), 1);
-      NumericMatrix temp = as<NumericMatrix>(stageResults["subjectsPerStage"])(_, Range(0, k));//TODO rename var
-      dataNumberOfCumulatedSubjects[index] = round(sum(na_omit(temp)), 1);
-      //Rcout << "b18\n";
-      dataRejectPerStage[index] = as<LogicalMatrix>(closedTest["rejected"])(g, k);
-      dataTestStatistics[index] = as<NumericMatrix>(stageResults["testStatistics"])(g, k);
-      dataSuccessStop[index] = as<LogicalVector>(closedTest["successStop"])[k];
-      if((k + 1) < kMax) {
-        //Rcout << "b19\n";
-        dataFutilityStop[index] = as<LogicalVector>(closedTest["futilityStop"])[k];
-        dataConditionalCriticalValue[index] = as<NumericVector>(stageResults["conditionalCriticalValue"])[k];
-        dataConditionalPowerAchieved[index + 1] = as<NumericVector>(stageResults["conditionalPowerPerStage"])[k];
-      }
-      //Rcout << "b20\n";
-      dataEffectEstimate[index] = as<NumericMatrix>(stageResults["overallEffects"])(g, k);
-      dataPValuesSeparate[index] = as<NumericMatrix>(closedTest["separatePValues"])(g, k);
-      index++;
-    }
-    //Rcout << "b21\n";
-    LogicalVector temp2 = as<LogicalMatrix>(closedTest["selectedArms"])(_,k);
-    LogicalVector temp5 = as<LogicalMatrix>(closedTest["rejected"])(_, k) & temp2[Range(0, gMax - 1)] | rejectedArmsBefore;
-    //Rcout << "b22\n";
-    if(!rejectAtSomeStage && as<bool>(any(temp5))) {
-      //Rcout << "b23\n";
-      simulatedRejectAtLeastOne[i] = simulatedRejectAtLeastOne[i] + 1;
-      rejectAtSomeStage = true;
-    }
-    //Rcout << "b24\n";
-    if(((k + 1) < kMax) && (as<LogicalVector>(closedTest["successStop"])[k] || as<LogicalVector>(closedTest["futilityStop"])[k])) {
-      // rejected hypotheses remain rejected also in case of early stopping
-      //Rcout << "b25\n";
-      //TODO simulatedRejections[(k + 1):kMax, i, ] <- simulatedRejections[(k + 1):kMax, i, ] + matrix((closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore), kMax - k, gMax, byrow = TRUE)
-      for(int g = 0; g < gMax; g++) {
-        //Rcout << "b26\n";
-        for(int idx = k + 1; idx < kMax; idx++) {
-          //Rcout << "b27\n";
-          simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] + (as<LogicalMatrix>(closedTest["rejected"])(g, k) & as<LogicalMatrix>(closedTest["selectedArms"])(idx, k) | rejectedArmsBefore[g]);
-        }
-      }
-      //Rcout << "b28\n";
-      break;
-    }
-    //Rcout << "b29\n";
-    LogicalVector v1 = as<LogicalMatrix>(closedTest["selectedArms"])(_, k);
-    //Rcout << "b30\n";
-    LogicalVector v2 = v1[Range(0, gMax - 1)];
-    //Rcout << "len is "<< v2.length() << "\n";
-    LogicalVector v3 = as<LogicalMatrix>(closedTest["rejected"])(_, k);
-    //Rcout << "len is "<< v3.length() << "\n";
-    //Rcout << "len is "<< rejectedArmsBefore.length() << "\n";
-    //Rcout << "b31\n";
-    LogicalVector v4 = v1[Range(0, gMax - 1)];
-    //Rcout << "b32\n";
-    //rejectedArmsBefore <- closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore
-    rejectedArmsBefore = v3 & v4 | rejectedArmsBefore;
-    //Rcout << "b33\n";
-  }
-  
-  return List::create(_["data"] = List::create(_["dataPValuesSeparate"] = dataPValuesSeparate,
-                        _["dataEffectEstimate"] = dataEffectEstimate,
-                        _["dataConditionalPowerAchieved"] = dataConditionalPowerAchieved,
-                        _["dataConditionalCriticalValue"] = dataConditionalCriticalValue,
-                        _["dataFutilityStop"] = dataFutilityStop,
-                        _["dataSuccessStop"] = dataSuccessStop,
-                        _["dataTestStatistics"] = dataTestStatistics,
-                        _["dataRejectPerStage"] = dataRejectPerStage,
-                        _["dataNumberOfCumulatedSubjects"] = dataNumberOfCumulatedSubjects,
-                        _["dataNumberOfSubjects"] = dataNumberOfSubjects,
-                        _["dataSubjectsActiveArm"] = dataSubjectsActiveArm,
-                        _["dataSubjectsControlArm"] = dataSubjectsControlArm,
-                        _["dataEffect"] = dataEffect,
-                        _["dataAlternative"] = dataAlternative,
-                        _["dataArmNumber"] = dataArmNumber,
-                        _["dataStageNumber"] = dataStageNumber,
-                        _["dataIterationNumber"] = dataIterationNumber),
-                      _["rejectedArmsBefore"] = rejectedArmsBefore,
-                      _["rejectAtSomeStage"] = rejectAtSomeStage,
-                      _["simulatedRejectAtLeastOne"] = simulatedRejectAtLeastOne,
-                      _["index"] = index,
-                      _["simulatedSubjectsPerStage"] = simulatedSubjectsPerStage,
-                      _["iterations"] = iterations,
-                      _["simulatedConditionalPower"] = simulatedConditionalPower,
-                      _["simulatedFutilityStopping"] = simulatedFutilityStopping,
-                      _["simulatedSuccessStopping"] = simulatedSuccessStopping,
-                      _["simulatedNumberOfActiveArms"] = simulatedNumberOfActiveArms,
-                      _["simulatedSelections"] = simulatedSelections,
-                      _["simulatedRejections"] = simulatedRejections
-                      );
-}
 
 // [[Rcpp::export(name = ".getSimulationMultiArmMeansInnerLoopCpp")]]
 List simulationMultiArmMeansInnerLoopCpp(NumericMatrix iterations,
@@ -649,10 +403,7 @@ List simulationMultiArmMeansInnerLoopCpp(NumericMatrix iterations,
                                          int kMax,
                                          int cols,
                                          int index,
-                                         List stageResults,
-                                         List closedTest,
                                          NumericVector simulatedSubjectsPerStage,
-                                         LogicalVector rejectedArmsBefore,
                                          NumericVector simulatedRejections,
                                          NumericVector simulatedSelections,
                                          NumericMatrix simulatedNumberOfActiveArms,
@@ -677,10 +428,75 @@ List simulationMultiArmMeansInnerLoopCpp(NumericMatrix iterations,
                                          NumericVector dataEffectEstimate,
                                          NumericVector dataPValuesSeparate,
                                          NumericVector simulatedRejectAtLeastOne,
-                                         bool rejectAtSomeStage) {
+                                         Environment design,
+                                         NumericMatrix indices,
+                                         Nullable<NumericVector> criticalValuesDunnett,
+                                         std::string intersectionTest,
+                                         std::string successCriterion,
+                                         double stDev,
+                                         NumericVector plannedSubjects,
+                                         std::string typeOfSelection,
+                                         std::string effectMeasure,
+                                         LogicalVector adaptations,
+                                         double epsilonValue,
+                                         double rValue,
+                                         double threshold,
+                                         NumericVector allocationRatioPlanned,
+                                         NumericVector minNumberOfSubjectsPerStage,
+                                         NumericVector maxNumberOfSubjectsPerStage,
+                                         double conditionalPower,
+                                         double thetaH1,
+                                         double stDevH1,
+                                         Function calcSubjectsFunction,
+                                         bool calcSubjectsFunctionIsUserDefined,
+                                         Nullable<Function> selectArmsFunction,
+                                         List stageResults 
+                                         ) {
   i = i - 1;
   j = j - 1;
-  index= index - 1;
+  index = index - 1;
+  //List stageResults2 = getSimulatedStageMeansMultiArmCpp(design,
+  //                                                      effectMatrix(i,_),
+  //                                                      stDev,
+  //                                                      plannedSubjects,
+  //                                                      typeOfSelection,
+  //                                                      effectMeasure,
+  //                                                      adaptations,
+  //                                                      epsilonValue,
+  //                                                      rValue,
+  //                                                      threshold,
+  //                                                      allocationRatioPlanned,
+  //                                                      minNumberOfSubjectsPerStage,
+  //                                                      maxNumberOfSubjectsPerStage,
+  //                                                      conditionalPower,
+  //                                                      thetaH1,
+  //                                                      stDevH1,
+  //                                                      calcSubjectsFunction,
+  //                                                      calcSubjectsFunctionIsUserDefined,
+  //                                                      selectArmsFunction);
+  
+  List closedTest;
+  Function performClosedConditionalDunnettTestForSimulation(".performClosedConditionalDunnettTestForSimulation");
+  Function performClosedCombinationTestForSimulationMultiArm(".performClosedCombinationTestForSimulationMultiArm");
+  std::string typeOfDesign = Rcpp::as<std::string>(((CharacterVector) design.attr("class"))[0]);
+  if(typeOfDesign == "TrialDesignConditionalDunnett") {
+    closedTest = performClosedConditionalDunnettTestForSimulation(
+                _["stageResults"] = stageResults,
+                _["design"] = design,
+                _["indices"] = indices,
+                _["criticalValuesDunnett"] = criticalValuesDunnett,
+                _["successCriterion"] = successCriterion);
+  } else {
+    closedTest = performClosedCombinationTestForSimulationMultiArm(
+                _["stageResults"] = stageResults,
+                _["design"] = design,
+                _["indices"] = indices,
+                _["intersectionTest"] = intersectionTest,
+                _["successCriterion"] = successCriterion);
+  }
+  
+  bool rejectAtSomeStage = false;
+  LogicalVector rejectedArmsBefore(gMax, false);
   
   for(int k = 0; k < kMax; k++) {
     for(int idx = 0; idx < gMax; idx++) {
@@ -754,7 +570,7 @@ List simulationMultiArmMeansInnerLoopCpp(NumericMatrix iterations,
       //simulatedRejections[(k + 1):kMax, i, ] <- simulatedRejections[(k + 1):kMax, i, ] +
       //                                          matrix((closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore),kMax - k, gMax,byrow = TRUE)
         for(int idx = k + 1; idx < kMax; idx++) {
-          simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] + (as<LogicalMatrix>(closedTest["rejected"])(g, k) & as<LogicalMatrix>(closedTest["selectedArms"])(idx, k) | rejectedArmsBefore[g]);
+          simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] + (as<LogicalMatrix>(closedTest["rejected"])(g, k) & as<LogicalMatrix>(closedTest["selectedArms"])(g, k) | rejectedArmsBefore[g]);
         }
       }
       break;
@@ -803,13 +619,21 @@ List simulationMultiArmMeansInnerLoopCpp(NumericMatrix iterations,
                      );
 }
 
+
 // [[Rcpp::export(name = ".hmmCpp")]]
-NumericVector hmm(int gMax, int k, int i, int cols, int kMax, NumericVector simulatedRejections, List closedTest, LogicalVector rejectedArmsBefore) {
+NumericVector hmm(int gMax, int k, int i, int cols, int kMax, NumericVector simulatedRejections, List closedTest, LogicalVector rejectedArmsBefore, LogicalMatrix cheat) {
+  //simulatedRejections[(k + 1):kMax, i, ] <- simulatedRejections[(k + 1):kMax, i, ] +
+  //    matrix((closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore),
+  //        kMax - k, gMax,
+  //        byrow = TRUE
+  //    )
+  
+  //LogicalMatrix ownCheat();+ cheat(idx - k - 1, g);
   i = i - 1;
   k = k - 1;
   for(int g = 0; g < gMax; g++) {
     for(int idx = k + 1; idx < kMax; idx++) {
-      simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] + (as<LogicalMatrix>(closedTest["rejected"])(g, k) & as<LogicalMatrix>(closedTest["selectedArms"])(idx, k) | rejectedArmsBefore[g]);
+      simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] + (as<LogicalMatrix>(closedTest["rejected"])(g, k) & as<LogicalMatrix>(closedTest["selectedArms"])(g, k) | rejectedArmsBefore[g]);
     }
   }
   return simulatedRejections;
