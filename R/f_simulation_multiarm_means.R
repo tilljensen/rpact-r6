@@ -450,152 +450,8 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
     index <- 1
     for (i in 1:cols) {
         for (j in 1:maxNumberOfIterations) {
-            #cppResults <- list()
-            #if(exists("criticalValuesDunnett")) {
-            #  cppResults <- .getSimulatedStageMeansMultiArmInnerForLoopCpp(
-            #      maxNumberOfIterations = maxNumberOfIterations,
-            #      design = design,
-            #      effectMatrix = effectMatrix,
-            #      stDev = stDev,
-            #      plannedSubjects = plannedSubjects,
-            #      typeOfSelection = typeOfSelection,
-            #      effectMeasure = effectMeasure,
-            #      adaptations = adaptations,
-            #      epsilonValue = epsilonValue,
-            #      rValue = rValue,
-            #      threshold = threshold,
-            #      allocationRatioPlanned = allocationRatioPlanned,
-            #      minNumberOfSubjectsPerStage = minNumberOfSubjectsPerStage,
-            #      maxNumberOfSubjectsPerStage = maxNumberOfSubjectsPerStage,
-            #      conditionalPower = conditionalPower,
-            #      thetaH1 = thetaH1,
-            #      stDevH1 = stDevH1,
-            #      calcSubjectsFunction = calcSubjectsFunction,
-            #      calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
-            #      selectArmsFunction = selectArmsFunction,
-            #      indices = indices,
-            #      intersectionTest = intersectionTest,
-            #      successCriterion = successCriterion,
-            #      gMax = gMax,
-            #      kMax = kMax,
-            #      criticalValuesDunnett = criticalValuesDunnett,
-            #      muMaxVector = muMaxVector,
-            #      i = i,
-            #      cols = cols,
-            #      index = index,
-            #      j = j,
-            #      iterations = iterations,
-            #      simulatedNumberOfActiveArms = simulatedNumberOfActiveArms,
-            #      simulatedSuccessStopping = simulatedSuccessStopping,
-            #      simulatedFutilityStopping = simulatedFutilityStopping,
-            #      simulatedConditionalPower = simulatedConditionalPower,
-            #      simulatedRejectAtLeastOne = simulatedRejectAtLeastOne,
-            #      simulatedRejections = simulatedRejections,
-            #      simulatedSelections = simulatedSelections,
-            #      simulatedSubjectsPerStage = simulatedSubjectsPerStage,
-            #      dataIterationNumber = dataIterationNumber,
-            #      dataStageNumber = dataStageNumber,
-            #      dataArmNumber = dataArmNumber,
-            #      dataAlternative = dataAlternative,
-            #      dataEffect = dataEffect,
-            #      dataSubjectsControlArm = dataSubjectsControlArm,
-            #      dataSubjectsActiveArm = dataSubjectsActiveArm,
-            #      dataNumberOfSubjects = dataNumberOfSubjects,
-            #      dataNumberOfCumulatedSubjects = dataNumberOfCumulatedSubjects,
-            #      dataRejectPerStage = dataRejectPerStage,
-            #      dataTestStatistics = dataTestStatistics,
-            #      dataSuccessStop = dataSuccessStop,
-            #      dataFutilityStop = dataFutilityStop,
-            #      dataConditionalCriticalValue = dataConditionalCriticalValue,
-            #      dataConditionalPowerAchieved = dataConditionalPowerAchieved,
-            #      dataEffectEstimate = dataEffectEstimate,
-            #      dataPValuesSeparate = dataPValuesSeparate
-            #  )
-            #} else {
-            #  cppResults <- .getSimulatedStageMeansMultiArmInnerForLoopCpp(
-            #      maxNumberOfIterations = maxNumberOfIterations,
-            #      design = design,
-            #      effectMatrix = effectMatrix,
-            #      stDev = stDev,
-            #      plannedSubjects = plannedSubjects,
-            #      typeOfSelection = typeOfSelection,
-            #      effectMeasure = effectMeasure,
-            #      adaptations = adaptations,
-            #      epsilonValue = epsilonValue,
-            #      rValue = rValue,
-            #      threshold = threshold,
-            #      allocationRatioPlanned = allocationRatioPlanned,
-            #      minNumberOfSubjectsPerStage = minNumberOfSubjectsPerStage,
-            #      maxNumberOfSubjectsPerStage = maxNumberOfSubjectsPerStage,
-            #      conditionalPower = conditionalPower,
-            #      thetaH1 = thetaH1,
-            #      stDevH1 = stDevH1,
-            #      calcSubjectsFunction = calcSubjectsFunction,
-            #      calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
-            #      selectArmsFunction = selectArmsFunction,
-            #      indices = indices,
-            #      intersectionTest = intersectionTest,
-            #      successCriterion = successCriterion,
-            #      gMax = gMax,
-            #      kMax = kMax,
-            #      criticalValuesDunnett = NULL,
-            #      muMaxVector = muMaxVector,
-            #      i = i,
-            #      cols = cols,
-            #      index = index,
-            #      j = j,
-            #      iterations = iterations,
-            #      simulatedNumberOfActiveArms = simulatedNumberOfActiveArms,
-            #      simulatedSuccessStopping = simulatedSuccessStopping,
-            #      simulatedFutilityStopping = simulatedFutilityStopping,
-            #      simulatedConditionalPower = simulatedConditionalPower,
-            #      simulatedRejectAtLeastOne = simulatedRejectAtLeastOne,
-            #      simulatedRejections = simulatedRejections,
-            #      simulatedSelections = simulatedSelections,
-            #      simulatedSubjectsPerStage = simulatedSubjectsPerStage,
-            #      dataIterationNumber = dataIterationNumber,
-            #      dataStageNumber = dataStageNumber,
-            #      dataArmNumber = dataArmNumber,
-            #      dataAlternative = dataAlternative,
-            #      dataEffect = dataEffect,
-            #      dataSubjectsControlArm = dataSubjectsControlArm,
-            #      dataSubjectsActiveArm = dataSubjectsActiveArm,
-            #      dataNumberOfSubjects = dataNumberOfSubjects,
-            #      dataNumberOfCumulatedSubjects = dataNumberOfCumulatedSubjects,
-            #      dataRejectPerStage = dataRejectPerStage,
-            #      dataTestStatistics = dataTestStatistics,
-            #      dataSuccessStop = dataSuccessStop,
-            #      dataFutilityStop = dataFutilityStop,
-            #      dataConditionalCriticalValue = dataConditionalCriticalValue,
-            #      dataConditionalPowerAchieved = dataConditionalPowerAchieved,
-            #      dataEffectEstimate = dataEffectEstimate,
-            #      dataPValuesSeparate = dataPValuesSeparate
-            #    )
-            #}
-
-            stageResults <- .getSimulatedStageMeansMultiArm(
-                design = design,
-                muVector = effectMatrix[i, ],
-                stDev = stDev,
-                plannedSubjects = plannedSubjects,
-                typeOfSelection = typeOfSelection,
-                effectMeasure = effectMeasure,
-                adaptations = adaptations,
-                epsilonValue = epsilonValue,
-                rValue = rValue,
-                threshold = threshold,
-                allocationRatioPlanned = allocationRatioPlanned,
-                minNumberOfSubjectsPerStage = minNumberOfSubjectsPerStage,
-                maxNumberOfSubjectsPerStage = maxNumberOfSubjectsPerStage,
-                conditionalPower = conditionalPower,
-                thetaH1 = thetaH1,
-                stDevH1 = stDevH1,
-                calcSubjectsFunction = calcSubjectsFunction,
-                calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
-                selectArmsFunction = selectArmsFunction
-            )
-          
-            #stageResults <- .getSimulatedStageMeansMultiArmCpp(
+            #print(plannedSubjects)
+            #stageResults <- .getSimulatedStageMeansMultiArm(
             #    design = design,
             #    muVector = effectMatrix[i, ],
             #    stDev = stDev,
@@ -616,61 +472,164 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
             #    calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
             #    selectArmsFunction = selectArmsFunction
             #)
-            if (.isTrialDesignConditionalDunnett(design)) {
-                closedTest <- .performClosedConditionalDunnettTestForSimulation(
-                    stageResults = stageResults,
-                    design = design, indices = indices,
-                    criticalValuesDunnett = criticalValuesDunnett, successCriterion = successCriterion
-                )
+            stageResults <- .getSimulatedStageMeansMultiArmCpp(
+                design = design,
+                muVector = effectMatrix[i, ],
+                stDev = stDev,
+                plannedSubjects = plannedSubjects,
+                typeOfSelection = typeOfSelection,
+                effectMeasure = effectMeasure,
+                adaptations = adaptations,
+                epsilonValue = epsilonValue,
+                rValue = rValue,
+                threshold = threshold,
+                allocationRatioPlanned = allocationRatioPlanned,
+                minNumberOfSubjectsPerStage = minNumberOfSubjectsPerStage,
+                maxNumberOfSubjectsPerStage = maxNumberOfSubjectsPerStage,
+                conditionalPower = conditionalPower,
+                thetaH1 = thetaH1,
+                stDevH1 = stDevH1,
+                calcSubjectsFunction = calcSubjectsFunction,
+                calcSubjectsFunctionIsUserDefined = calcSubjectsFunctionIsUserDefined,
+                selectArmsFunction = selectArmsFunction
+            )
+            #if (.isTrialDesignConditionalDunnett(design)) {
+            #    closedTest <- .performClosedConditionalDunnettTestForSimulation(
+            #        stageResults = stageResults,
+            #        design = design, indices = indices,
+            #        criticalValuesDunnett = criticalValuesDunnett, successCriterion = successCriterion
+            #    )
+            #} else {
+            #    closedTest <- .performClosedCombinationTestForSimulationMultiArm(
+            #        stageResults = stageResults,
+            #        design = design, indices = indices,
+            #        intersectionTest = intersectionTest, successCriterion = successCriterion
+            #    )
+            #}
+            #rejectAtSomeStage <- FALSE
+            #rejectedArmsBefore <- rep(FALSE, gMax)
+            
+            cppResults <- list()
+            if(exists("criticalValuesDunnett")) {
+              cppResults <- .getSimulationMultiArmMeansInnerLoopCpp(iterations,
+                                                                    simulatedFutilityStopping,
+                                                                    simulatedConditionalPower,
+                                                                    i,
+                                                                    j,
+                                                                    gMax,
+                                                                    kMax,
+                                                                    cols,
+                                                                    index,
+                                                                    simulatedSubjectsPerStage,
+                                                                    simulatedRejections,
+                                                                    simulatedSelections,
+                                                                    simulatedNumberOfActiveArms,
+                                                                    simulatedSuccessStopping,
+                                                                    muMaxVector,
+                                                                    effectMatrix,
+                                                                    dataIterationNumber,
+                                                                    dataStageNumber,
+                                                                    dataArmNumber,
+                                                                    dataAlternative,
+                                                                    dataEffect,
+                                                                    dataSubjectsControlArm,
+                                                                    dataSubjectsActiveArm,
+                                                                    dataNumberOfSubjects,
+                                                                    dataNumberOfCumulatedSubjects,
+                                                                    dataRejectPerStage,
+                                                                    dataTestStatistics,
+                                                                    dataSuccessStop,
+                                                                    dataFutilityStop,
+                                                                    dataConditionalCriticalValue,
+                                                                    dataConditionalPowerAchieved,
+                                                                    dataEffectEstimate,
+                                                                    dataPValuesSeparate,
+                                                                    simulatedRejectAtLeastOne,
+                                                                    design,
+                                                                    indices,
+                                                                    criticalValuesDunnett,
+                                                                    intersectionTest,
+                                                                    successCriterion,
+                                                                    stDev,
+                                                                    plannedSubjects,
+                                                                    typeOfSelection,
+                                                                    effectMeasure,
+                                                                    adaptations,
+                                                                    epsilonValue,
+                                                                    rValue,
+                                                                    threshold,
+                                                                    allocationRatioPlanned,
+                                                                    minNumberOfSubjectsPerStage,
+					                                                          maxNumberOfSubjectsPerStage,
+                                                                    conditionalPower,
+                                                                    thetaH1,
+                                                                    stDevH1,
+                                                                    calcSubjectsFunction,
+                                                                    calcSubjectsFunctionIsUserDefined,
+                                                                    selectArmsFunction,
+					                                                          stageResults
+                                                                    )
             } else {
-                closedTest <- .performClosedCombinationTestForSimulationMultiArm(
-                    stageResults = stageResults,
-                    design = design, indices = indices,
-                    intersectionTest = intersectionTest, successCriterion = successCriterion
-                )
+              cppResults <- .getSimulationMultiArmMeansInnerLoopCpp(iterations,
+                                                                    simulatedFutilityStopping,
+                                                                    simulatedConditionalPower,
+                                                                    i,
+                                                                    j,
+                                                                    gMax,
+                                                                    kMax,
+                                                                    cols,
+                                                                    index,
+                                                                    simulatedSubjectsPerStage,
+                                                                    simulatedRejections,
+                                                                    simulatedSelections,
+                                                                    simulatedNumberOfActiveArms,
+                                                                    simulatedSuccessStopping,
+                                                                    muMaxVector,
+                                                                    effectMatrix,
+                                                                    dataIterationNumber,
+                                                                    dataStageNumber,
+                                                                    dataArmNumber,
+                                                                    dataAlternative,
+                                                                    dataEffect,
+                                                                    dataSubjectsControlArm,
+                                                                    dataSubjectsActiveArm,
+                                                                    dataNumberOfSubjects,
+                                                                    dataNumberOfCumulatedSubjects,
+                                                                    dataRejectPerStage,
+                                                                    dataTestStatistics,
+                                                                    dataSuccessStop,
+                                                                    dataFutilityStop,
+                                                                    dataConditionalCriticalValue,
+                                                                    dataConditionalPowerAchieved,
+                                                                    dataEffectEstimate,
+                                                                    dataPValuesSeparate,
+                                                                    simulatedRejectAtLeastOne,
+                                                                    design,
+                                                                    indices,
+                                                                    NULL,
+                                                                    intersectionTest,
+                                                                    successCriterion,
+                                                                    stDev,
+                                                                    plannedSubjects,
+                                                                    typeOfSelection,
+                                                                    effectMeasure,
+                                                                    adaptations,
+                                                                    epsilonValue,
+                                                                    rValue,
+                                                                    threshold,
+                                                                    allocationRatioPlanned,
+                                                                    minNumberOfSubjectsPerStage,
+					                                                          maxNumberOfSubjectsPerStage,
+                                                                    conditionalPower,
+                                                                    thetaH1,
+                                                                    stDevH1,
+                                                                    calcSubjectsFunction,
+                                                                    calcSubjectsFunctionIsUserDefined,
+                                                                    selectArmsFunction,
+					                                                          stageResults
+                                                                    )
             }
 
-            rejectAtSomeStage <- FALSE
-            rejectedArmsBefore <- rep(FALSE, gMax)
-            
-            cppResults <- .getSimulationMultiArmMeansInnerLoopCpp(iterations,
-                                                                  simulatedFutilityStopping,
-                                                                  simulatedConditionalPower,
-                                                                  i,
-                                                                  j,
-                                                                  gMax,
-                                                                  kMax,
-                                                                  cols,
-                                                                  index,
-                                                                  stageResults,
-                                                                  closedTest,
-                                                                  simulatedSubjectsPerStage,
-                                                                  rejectedArmsBefore,
-                                                                  simulatedRejections,
-                                                                  simulatedSelections,
-                                                                  simulatedNumberOfActiveArms,
-                                                                  simulatedSuccessStopping,
-                                                                  muMaxVector,
-                                                                  effectMatrix,
-                                                                  dataIterationNumber,
-                                                                  dataStageNumber,
-                                                                  dataArmNumber,
-                                                                  dataAlternative,
-                                                                  dataEffect,
-                                                                  dataSubjectsControlArm,
-                                                                  dataSubjectsActiveArm,
-                                                                  dataNumberOfSubjects,
-                                                                  dataNumberOfCumulatedSubjects,
-                                                                  dataRejectPerStage,
-                                                                  dataTestStatistics,
-                                                                  dataSuccessStop,
-                                                                  dataFutilityStop,
-                                                                  dataConditionalCriticalValue,
-                                                                  dataConditionalPowerAchieved,
-                                                                  dataEffectEstimate,
-                                                                  dataPValuesSeparate,
-                                                                  simulatedRejectAtLeastOne,
-                                                                  rejectAtSomeStage)
             iterations <- cppResults$iterations
             simulatedSubjectsPerStage <- cppResults$simulatedSubjectsPerStage
             simulatedFutilityStopping <- cppResults$simulatedFutilityStopping
@@ -700,22 +659,16 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
             simulatedRejectAtLeastOne <- cppResults$simulatedRejectAtLeastOne
             rejectAtSomeStage <- cppResults$rejectAtSomeStage
             #for (k in 1:kMax) {
-#                
                 #if(cppResults$isBreak) {
                 #  break
                 #}
                 #simulatedRejections[k, i, ] <- simulatedRejections[k, i, ] +
                 #    (closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore)
                 #simulatedSelections[k, i, ] <- simulatedSelections[k, i, ] + closedTest$selectedArms[, k]
-#
                 #simulatedNumberOfActiveArms[k, i] <- simulatedNumberOfActiveArms[k, i] + sum(closedTest$selectedArms[, k])
-#
                 #if (!any(is.na(closedTest$successStop))) {
                 #    simulatedSuccessStopping[k, i] <- simulatedSuccessStopping[k, i] + closedTest$successStop[k]
                 #}
-                #
-#
-                #
                 #if ((kMax > 1) && (k < kMax)) {
                 #    if (!any(is.na(closedTest$futilityStop))) {
                 #        simulatedFutilityStopping[k, i] <- simulatedFutilityStopping[k, i] +
@@ -726,16 +679,13 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
                 #            stageResults$conditionalPowerPerStage[k]
                 #    }
                 #}
-#
                 #iterations[k, i] <- iterations[k, i] + 1
-#
                 #for (g in (1:(gMax + 1))) {
                 #    if (!is.na(stageResults$subjectsPerStage[g, k])) {
                 #        simulatedSubjectsPerStage[k, i, g] <- simulatedSubjectsPerStage[k, i, g] +
                 #            stageResults$subjectsPerStage[g, k]
                 #    }
                 #}
-#
                 #for (g in 1:gMax) {
                 #    dataIterationNumber[index] <- j
                 #    dataStageNumber[index] <- k
@@ -758,17 +708,19 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
                 #    dataPValuesSeparate[index] <- closedTest$separatePValues[g, k]
                 #    index <- index + 1
                 #}
-#
                 #if (!rejectAtSomeStage && any(closedTest$rejected[, k] &
                 #        closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore)) {
                 #    simulatedRejectAtLeastOne[i] <- simulatedRejectAtLeastOne[i] + 1
                 #    rejectAtSomeStage <- TRUE
                 #}
-#
                 #if (.funnyBoolCpp(k, kMax, closedTest)) {
                 #if ((k < kMax) && (closedTest$successStop[k] || closedTest$futilityStop[k])) {
                     # rejected hypotheses remain rejected also in case of early stopping
-                    #simulatedRejections <- .hmmCpp(gMax, k, i, cols, kMax, simulatedRejections, closedTest, rejectedArmsBefore)
+                    #cheat <- matrix((closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore),
+                    #        kMax - k, gMax,
+                    #        byrow = TRUE
+                    #    )
+                    #simulatedRejections <- .hmmCpp(gMax, k, i, cols, kMax, simulatedRejections, closedTest, rejectedArmsBefore, cheat)
                     #simulatedRejections[(k + 1):kMax, i, ] <- simulatedRejections[(k + 1):kMax, i, ] +
                     #    matrix((closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore),
                     #        kMax - k, gMax,
@@ -776,8 +728,7 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
                     #    )
                     #break
                 #}
-
-                # rejectedArmsBefore <- closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore
+                #rejectedArmsBefore <- closedTest$rejected[, k] & closedTest$selectedArms[1:gMax, k] | rejectedArmsBefore
             #}
 
             #dataPValuesSeparate <- cppResults$data$dataPValuesSeparate
