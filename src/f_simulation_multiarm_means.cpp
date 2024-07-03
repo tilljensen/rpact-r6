@@ -658,3 +658,57 @@ bool funnyBool(int k, int kMax, List closedTest) {
   k = k - 1;
   return ((k + 1) < kMax) && (as<LogicalVector>(closedTest["successStop"])[k] || as<LogicalVector>(closedTest["futilityStop"])[k]);
 }
+
+// [[Rcpp::export(name = ".lastSectionCpp")]]
+List lastSection(NumericVector simulatedSubjectsPerStage,
+                 NumericMatrix iterations,
+                 int i,
+                 int gMax,
+                 int kMax,
+                 int cols,
+                 NumericVector simulatedRejections,
+                 NumericMatrix simulatedSuccessStopping,
+                 NumericMatrix simulatedFutilityStopping,
+                 int maxNumberOfIterations,
+                 NumericVector expectedNumberOfSubjects) {
+  i = i - 1;
+  NumericVector stopping;
+  //simulatedSubjectsPerStage = sapply(simulatedSubjectsPerStage,[&](double x){return NumericVector::is_na(x) ? 0 : x;});
+
+  //TODO simulatedSubjectsPerStage[, i, ] <- simulatedSubjectsPerStage[, i, ] / iterations[, i]
+  for(int g = 0; g < gMax + 1; g++) {
+    for(int idx = 0; idx < kMax; idx++) {
+      //simulatedSubjectsPerStage[idx + i * kMax + g * kMax * cols] = simulatedSubjectsPerStage[idx + i * kMax + g * kMax * cols] / iterations[idx, i];
+    }
+  }
+    
+  if(kMax > 1) {
+    //TODO simulatedRejections[2:kMax, i, ] <- simulatedRejections[2:kMax, i, ] - simulatedRejections[1:(kMax - 1), i, ]
+    for(int g = 0; g < gMax; g++) {
+      for(int idx = 1; idx < kMax; idx++) {
+        //simulatedRejections[idx + (i * kMax + g * kMax * cols)] = simulatedRejections[idx + (i * kMax + g * kMax * cols)] - simulatedRejections[idx - 1 + (i * kMax + g * kMax * cols)];
+      }
+    }
+      
+    NumericVector temp1 = simulatedSuccessStopping(_, i);
+    NumericVector temp2 = simulatedFutilityStopping(_, i);
+    NumericVector temp3 = cumsum(temp1[Range(0, kMax - 2)] + temp2);
+    stopping = temp3 / maxNumberOfIterations;
+      
+    //TODO  expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ] + t(1 - stopping) %*% simulatedSubjectsPerStage[2:kMax, i, ])
+    for(int g = 0; g < gMax + 1; g++) {
+      expectedNumberOfSubjects[i] += simulatedSubjectsPerStage[i * kMax + g * kMax * cols] + matrixMult(1 - stopping, simulatedSubjectsPerStage[Range(1 + i * kMax + g * kMax * cols,(kMax - 1) + i * kMax + g * kMax * cols)]);
+    }
+  } else {
+    //TODO expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ])
+    for(int g = 0; g < gMax + 1; g++) {
+      expectedNumberOfSubjects[i] += simulatedSubjectsPerStage[i * kMax + g * kMax * cols];
+    }
+  }
+  i = i + 1;
+    
+  return List::create(_["simulatedSubjectsPerStage"] = simulatedSubjectsPerStage,
+                      _["simulatedRejections"] = simulatedRejections,
+                      _["expectedNumberOfSubjects"] = expectedNumberOfSubjects,
+                      _["stopping"] = stopping);
+}
