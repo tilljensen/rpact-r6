@@ -761,20 +761,33 @@ getSimulationMultiArmMeans <- function(design = NULL, ...,
             #simulatedSelections <- cppResults$simulatedSelections
             #simulatedRejections <- cppResults$simulatedRejections
         }
-
         simulatedSubjectsPerStage[is.na(simulatedSubjectsPerStage)] <- 0
-
         simulatedSubjectsPerStage[, i, ] <- simulatedSubjectsPerStage[, i, ] / iterations[, i]
+        lastSectionCppResult <- .lastSectionCpp(simulatedSubjectsPerStage = simulatedSubjectsPerStage,
+                                                iterations = iterations,
+                                                i = i,
+                                                gMax = gMax,
+                                                kMax = kMax,
+                                                cols = cols,
+                                                simulatedRejections = simulatedRejections,
+                                                simulatedSuccessStopping = simulatedSuccessStopping,
+                                                simulatedFutilityStopping = simulatedFutilityStopping,
+                                                maxNumberOfIterations = maxNumberOfIterations,
+                                                expectedNumberOfSubjects = expectedNumberOfSubjects)
+        simulatedSubjectsPerStage <- lastSectionCppResult$simulatedSubjectsPerStage
+        simulatedRejections <- lastSectionCppResult$simulatedRejections
+        expectedNumberOfSubjects <- lastSectionCppResult$expectedNumberOfSubjects
+        stopping <- lastSectionCppResult$stopping
 
         if (kMax > 1) {
             simulatedRejections[2:kMax, i, ] <- simulatedRejections[2:kMax, i, ] -
                 simulatedRejections[1:(kMax - 1), i, ]
-            stopping <- cumsum(simulatedSuccessStopping[1:(kMax - 1), i] +
-                simulatedFutilityStopping[, i]) / maxNumberOfIterations
-            expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ] + t(1 - stopping) %*%
-                simulatedSubjectsPerStage[2:kMax, i, ])
+            #stopping <- cumsum(simulatedSuccessStopping[1:(kMax - 1), i] +
+            #    simulatedFutilityStopping[, i]) / maxNumberOfIterations
+            #expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ] + t(1 - stopping) %*%
+            #    simulatedSubjectsPerStage[2:kMax, i, ])
         } else {
-            expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ])
+            #expectedNumberOfSubjects[i] <- sum(simulatedSubjectsPerStage[1, i, ])
         }
     }
 
